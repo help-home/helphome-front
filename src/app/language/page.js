@@ -3,30 +3,12 @@
 import { useState } from 'react';
 
 export default function LanguagePage() {
-  const [languages, setLanguages] = useState([
-    { id: 1, code: 'ko', name: '한국어', englishName: 'Korean', isEditing: false },
-    { id: 2, code: 'en', name: 'English', englishName: 'English', isEditing: false },
-    { id: 3, code: 'ja', name: '日本語', englishName: 'Japanese', isEditing: false },
-    { id: 4, code: 'zh', name: '中文', englishName: 'Chinese', isEditing: false },
-  ]);
+  const [languages, setLanguages] = useState([]);
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [nextId, setNextId] = useState(5);
 
-  const availableLanguageCodes = [
-    { code: 'ko', name: '한국어 (Korean)' },
-    { code: 'en', name: 'English' },
-    { code: 'ja', name: '日本語 (Japanese)' },
-    { code: 'zh', name: '中文 (Chinese)' },
-    { code: 'es', name: 'Español (Spanish)' },
-    { code: 'fr', name: 'Français (French)' },
-    { code: 'de', name: 'Deutsch (German)' },
-    { code: 'ru', name: 'Русский (Russian)' },
-    { code: 'pt', name: 'Português (Portuguese)' },
-    { code: 'ar', name: 'العربية (Arabic)' },
-  ];
-
-  const handleSelectAll = (e) => {
+  const handleSelectAll = () => {
     if (selectedIds.length === languages.length) {
       setSelectedIds([]);
     } else {
@@ -42,17 +24,70 @@ export default function LanguagePage() {
     }
   };
 
-  const handleRegister = () => {
-    const newLanguage = {
-      id: nextId,
-      code: '',
-      name: '',
-      englishName: '',
-      isEditing: true,
-    };
-    setLanguages([newLanguage, ...languages]);
-    setSelectedIds([nextId, ...selectedIds]);
-    setNextId(nextId + 1);
+  const handleRegister = async () => {
+    // 선택된 언어들을 찾기
+    const selectedLanguages = languages.filter(lang => selectedIds.includes(lang.id) && lang.isEditing);
+
+    if (selectedLanguages.length === 0) {
+      // 선택된 편집 중인 언어가 없으면 새 행 추가
+      const newLanguage = {
+        id: nextId,
+        category: '공통',
+        korean: '',
+        english: '',
+        chinese: '',
+        isEditing: true,
+      };
+      setLanguages([newLanguage, ...languages]);
+      setSelectedIds([nextId, ...selectedIds]);
+      setNextId(nextId + 1);
+      return;
+    }
+
+    // 선택된 언어들을 백엔드에 저장
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+    try {
+      for (const lang of selectedLanguages) {
+        // 유효성 검사
+        if (!lang.korean) {
+          alert('한국어는 필수 항목입니다.');
+          return;
+        }
+
+        const response = await fetch(`${apiUrl}/api/languages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            category: lang.category,
+            koName: lang.korean,
+            enName: lang.english,
+            chName: lang.chinese,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('저장 실패');
+        }
+      }
+
+      // 저장 성공 시 편집 모드 해제
+      setLanguages(languages.map(lang =>
+        selectedIds.includes(lang.id) && lang.isEditing
+          ? { ...lang, isEditing: false }
+          : lang
+      ));
+
+      // 선택 해제
+      setSelectedIds(selectedIds.filter(id => !selectedLanguages.some(lang => lang.id === id)));
+
+      alert('저장되었습니다.');
+    } catch (error) {
+      console.error('저장 에러:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
   };
 
   const handleEdit = () => {
@@ -142,9 +177,9 @@ export default function LanguagePage() {
                 onChange={handleSelectAll}
               />
             </th>
-            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>코드</th>
-            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>언어명</th>
-            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>영문명</th>
+            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>언어</th>
+            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>영문</th>
+            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>중문</th>
           </tr>
         </thead>
         <tbody>
@@ -175,35 +210,11 @@ export default function LanguagePage() {
               </td>
               <td style={{ padding: '12px', border: '1px solid #ddd' }}>
                 {lang.isEditing ? (
-                  <select
-                    value={lang.code}
-                    onChange={(e) => handleFieldChange(lang.id, 'code', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                  >
-                    <option value="">선택</option>
-                    {availableLanguageCodes.map((langCode) => (
-                      <option key={langCode.code} value={langCode.code}>
-                        {langCode.code} - {langCode.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  lang.code
-                )}
-              </td>
-              <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                {lang.isEditing ? (
                   <input
                     type="text"
-                    value={lang.name}
-                    onChange={(e) => handleFieldChange(lang.id, 'name', e.target.value)}
-                    placeholder="언어명 입력"
+                    value={lang.korean}
+                    onChange={(e) => handleFieldChange(lang.id, 'korean', e.target.value)}
+                    placeholder="한국어 입력"
                     style={{
                       width: '100%',
                       padding: '8px',
@@ -213,16 +224,16 @@ export default function LanguagePage() {
                     }}
                   />
                 ) : (
-                  lang.name
+                  lang.korean
                 )}
               </td>
               <td style={{ padding: '12px', border: '1px solid #ddd' }}>
                 {lang.isEditing ? (
                   <input
                     type="text"
-                    value={lang.englishName}
-                    onChange={(e) => handleFieldChange(lang.id, 'englishName', e.target.value)}
-                    placeholder="영문명 입력"
+                    value={lang.english}
+                    onChange={(e) => handleFieldChange(lang.id, 'english', e.target.value)}
+                    placeholder="영문 입력"
                     style={{
                       width: '100%',
                       padding: '8px',
@@ -232,7 +243,26 @@ export default function LanguagePage() {
                     }}
                   />
                 ) : (
-                  lang.englishName
+                  lang.english
+                )}
+              </td>
+              <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                {lang.isEditing ? (
+                  <input
+                    type="text"
+                    value={lang.chinese}
+                    onChange={(e) => handleFieldChange(lang.id, 'chinese', e.target.value)}
+                    placeholder="중문 입력"
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                ) : (
+                  lang.chinese
                 )}
               </td>
             </tr>
