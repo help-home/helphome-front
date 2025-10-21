@@ -7,9 +7,14 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test`)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    
+    fetch(`${apiUrl}/`)
       .then(res => res.text())
-      .then(data => setMessage(data))
+      .then(data => {
+        console.log('응답:', data);
+        setMessage(data);
+      })
       .catch(err => {
         console.error('에러:', err);
         setError(err.message);
