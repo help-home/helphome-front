@@ -1,13 +1,27 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+  const [message, setMessage] = useState('로딩 중...');
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test`)
+      .then(res => res.text())
+      .then(data => setMessage(data))
+      .catch(err => {
+        console.error('에러:', err);
+        setError(err.message);
+      });
+  }, []);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <h1 className="text-4xl sm:text-5xl font-bold text-center sm:text-left">
-          Welcome to <span className="text-blue-600">Next.js!</span>
-        </h1>
-      </main>
+    <div style={{ padding: '50px' }}>
+      <h1>백엔드 연동 테스트</h1>
+      <p><strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL}</p>
+      <p><strong>응답:</strong> {message}</p>
+      {error && <p style={{ color: 'red' }}>에러: {error}</p>}
     </div>
   );
 }
