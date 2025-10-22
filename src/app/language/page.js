@@ -55,13 +55,20 @@ export default function LanguagePage() {
           return;
         }
 
+        // 구분 값을 영문 키로 변환
+        const categoryMap = {
+          '공통': 'common',
+          '성공': 'success',
+          '에러': 'error'
+        };
+
         const response = await fetch(`${apiUrl}/api/languages`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            category: lang.category,
+            category: categoryMap[lang.category],
             koName: lang.korean,
             enName: lang.english,
             chName: lang.chinese,
@@ -177,6 +184,7 @@ export default function LanguagePage() {
                 onChange={handleSelectAll}
               />
             </th>
+            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>구분</th>
             <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>언어</th>
             <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>영문</th>
             <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>중문</th>
@@ -207,6 +215,27 @@ export default function LanguagePage() {
                   checked={selectedIds.includes(lang.id)}
                   onChange={() => handleSelectOne(lang.id)}
                 />
+              </td>
+              <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                {lang.isEditing ? (
+                  <select
+                    value={lang.category}
+                    onChange={(e) => handleFieldChange(lang.id, 'category', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value="공통">공통</option>
+                    <option value="성공">성공</option>
+                    <option value="에러">에러</option>
+                  </select>
+                ) : (
+                  lang.category
+                )}
               </td>
               <td style={{ padding: '12px', border: '1px solid #ddd' }}>
                 {lang.isEditing ? (
