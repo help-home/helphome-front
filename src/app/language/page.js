@@ -1,12 +1,61 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function LanguagePage() {
   const [languages, setLanguages] = useState([]);
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [nextId, setNextId] = useState(5);
+
+  const [searchCategory, setSearchCategory] = useState('공통');
+  const [searchText, setSearchText] = useState('');
+
+  // 페이지 로드 시 저장된 언어 데이터 가져오기
+  useEffect(() => {
+    fetchLanguages();
+  }, []);
+
+  const fetchLanguages = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+    try {
+      const response = await fetch(`${apiUrl}/api/languages/active`);
+
+      if (!response.ok) {
+        throw new Error('데이터 로드 실패');
+      }
+
+      const data = await response.json();
+
+      // 백엔드 데이터를 프론트엔드 형식으로 변환
+      const categoryMap = {
+        'common': '공통',
+        'success': '성공',
+        'error': '에러'
+      };
+
+      const formattedLanguages = data.map((lang, index) => ({
+        id: lang.id || index,
+        category: categoryMap[lang.category] || lang.category,
+        korean: lang.koName || '',
+        english: lang.enName || '',
+        chinese: lang.chName || '',
+        isEditing: false
+      }));
+
+      setLanguages(formattedLanguages);
+
+      // nextId를 가장 큰 id + 1로 설정
+      if (formattedLanguages.length > 0) {
+        const maxId = Math.max(...formattedLanguages.map(lang => lang.id));
+        setNextId(maxId + 1);
+      }
+    } catch (error) {
+      console.error('언어 데이터 로드 에러:', error);
+      alert('데이터를 불러오는 중 오류가 발생했습니다.');
+    }
+  };
 
   const handleSelectAll = () => {
     if (selectedIds.length === languages.length) {
@@ -91,6 +140,9 @@ export default function LanguagePage() {
       setSelectedIds(selectedIds.filter(id => !selectedLanguages.some(lang => lang.id === id)));
 
       alert('저장되었습니다.');
+
+      // 데이터 다시 로드
+      await fetchLanguages();
     } catch (error) {
       console.error('저장 에러:', error);
       alert('저장 중 오류가 발생했습니다.');
@@ -125,48 +177,97 @@ export default function LanguagePage() {
     <div style={{ padding: '50px' }}>
       <h1 style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '20px' }}>다국어 설정</h1>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-        <button
-          onClick={handleRegister}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          등록
-        </button>
-        <button
-          onClick={handleEdit}
-          disabled={selectedIds.length !== 1}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: selectedIds.length === 1 ? '#2196F3' : '#ccc',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedIds.length === 1 ? 'pointer' : 'not-allowed'
-          }}
-        >
-          수정
-        </button>
-        <button
-          onClick={handleDelete}
-          disabled={selectedIds.length === 0}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: selectedIds.length > 0 ? '#f44336' : '#ccc',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedIds.length > 0 ? 'pointer' : 'not-allowed'
-          }}
-        >
-          삭제
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <select
+            value={searchCategory}
+            onChange={(e) => setSearchCategory(e.target.value)}
+            style={{
+              padding: '10px 20px',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              height: '42px'
+            }}
+          >
+            <option value="공통">공통</option>
+            <option value="성공">성공</option>
+            <option value="에러">에러</option>
+          </select>
+          <input
+            type="text"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="언어 검색"
+            style={{
+              padding: '10px',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              fontSize: '14px',
+              width: '300px',
+              height: '42px',
+              boxSizing: 'border-box'
+            }}
+          />
+          <button
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#1976D2',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              height: '42px',
+              fontSize: '14px'
+            }}
+          >
+            검색
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={handleRegister}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            등록
+          </button>
+          <button
+            onClick={handleEdit}
+            disabled={selectedIds.length !== 1}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: selectedIds.length === 1 ? '#2196F3' : '#ccc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: selectedIds.length === 1 ? 'pointer' : 'not-allowed'
+            }}
+          >
+            수정
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={selectedIds.length === 0}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: selectedIds.length > 0 ? '#f44336' : '#ccc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: selectedIds.length > 0 ? 'pointer' : 'not-allowed'
+            }}
+          >
+            삭제
+          </button>
+        </div>
       </div>
 
       <table style={{
