@@ -185,7 +185,7 @@ export default function LanguagePage() {
               />
             </th>
             <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>구분</th>
-            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>언어</th>
+            <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>국문</th>
             <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>영문</th>
             <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>중문</th>
           </tr>
