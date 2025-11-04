@@ -113,8 +113,15 @@ export default function LanguagePage() {
           에러: "error",
         };
 
-        const response = await fetch(`${apiUrl}/api/languages`, {
-          method: "POST",
+        // 새 데이터인지 기존 데이터인지 확인 (id가 nextId보다 작으면 기존 데이터)
+        const isExistingData = typeof lang.id === 'number' && lang.id < nextId;
+        const method = isExistingData ? "PATCH" : "POST";
+        const url = isExistingData
+          ? `${apiUrl}/api/languages/${lang.id}`
+          : `${apiUrl}/api/languages`;
+
+        const response = await fetch(url, {
+          method: method,
           headers: {
             "Content-Type": "application/json",
           },
@@ -158,7 +165,14 @@ export default function LanguagePage() {
   };
 
   const handleEdit = () => {
-    console.log("수정 클릭, 선택된 항목:", selectedIds);
+    if (selectedIds.length === 1) {
+      // 선택된 항목을 편집 모드로 변경
+      setLanguages(
+        languages.map((lang) =>
+          lang.id === selectedIds[0] ? { ...lang, isEditing: true } : lang
+        )
+      );
+    }
   };
 
   const handleDelete = () => {
