@@ -42,6 +42,7 @@ export default function LanguagePage() {
         english: lang.enName || "",
         chinese: lang.chName || "",
         isEditing: false,
+        isNew: false,
       }));
 
       setLanguages(formattedLanguages);
@@ -88,6 +89,7 @@ export default function LanguagePage() {
         english: "",
         chinese: "",
         isEditing: true,
+        isNew: true,
       };
       setLanguages([newLanguage, ...languages]);
       setSelectedIds([nextId, ...selectedIds]);
@@ -175,8 +177,49 @@ export default function LanguagePage() {
     }
   };
 
-  const handleDelete = () => {
-    console.log("삭제 클릭, 선택된 항목:", selectedIds);
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) {
+      alert("삭제할 항목을 선택해주세요.");
+      return;
+    }
+
+    const confirmDelete = window.confirm("선택한 항목을 삭제하시겠습니까?");
+    if (!confirmDelete) {
+      return;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const idsToDelete = [...selectedIds];
+    const existingLanguages = languages.filter(
+      (lang) => idsToDelete.includes(lang.id) && !lang.isNew
+    );
+
+    try {
+      await Promise.all(
+        existingLanguages.map(async (lang) => {
+          const response = await fetch(`${apiUrl}/api/languages/${lang.id}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            throw new Error("삭제 실패");
+          }
+        })
+      );
+
+      setLanguages((prev) =>
+        prev.filter((lang) => !idsToDelete.includes(lang.id))
+      );
+      setSelectedIds([]);
+      alert("삭제되었습니다.");
+
+      if (existingLanguages.length > 0) {
+        await fetchLanguages();
+      }
+    } catch (error) {
+      console.error("삭제 에러:", error);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
   };
 
   const handleSave = (id) => {
@@ -245,6 +288,7 @@ export default function LanguagePage() {
         english: lang.enName || "",
         chinese: lang.chName || "",
         isEditing: false,
+        isNew: false,
       }));
 
       setLanguages(formattedLanguages);
