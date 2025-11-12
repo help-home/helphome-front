@@ -299,6 +299,13 @@ export default function LanguagePage() {
     }
   };
 
+  const handleResetSearch = async () => {
+    setSearchCategory("구분");
+    setSearchText("");
+    setSelectedIds([]);
+    await fetchLanguages();
+  };
+
   return (
     <div style={{ padding: "50px" }}>
       <h1
@@ -363,6 +370,21 @@ export default function LanguagePage() {
             }}
           >
             검색
+          </button>
+          <button
+            onClick={handleResetSearch}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#9E9E9E",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              height: "42px",
+              fontSize: "14px",
+            }}
+          >
+            초기화
           </button>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
